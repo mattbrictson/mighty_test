@@ -1,14 +1,14 @@
 require "thor"
 
-module Example
+module MightyTest
   class CLI < Thor
     extend ThorExt::Start
 
     map %w[-v --version] => "version"
 
-    desc "version", "Display example version", hide: true
+    desc "version", "Display mighty_test version", hide: true
     def version
-      say "example/#{VERSION} #{RUBY_DESCRIPTION}"
+      say "mighty_test/#{VERSION} #{RUBY_DESCRIPTION}"
     end
   end
 end
