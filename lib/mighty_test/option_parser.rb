@@ -6,7 +6,7 @@ module MightyTest
       @parser = ::OptionParser.new do |op|
         op.require_exact = true
         op.banner = <<~BANNER
-          Usage: mt
+          Usage: mt <test file>...
 
         BANNER
 

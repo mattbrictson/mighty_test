@@ -5,5 +5,18 @@ module MightyTest
       Minitest.run(["--help"])
       exit
     end
+
+    def run_inline_and_exit!(*test_files, args: [])
+      $LOAD_PATH.unshift "test"
+      ARGV.replace(Array(args))
+
+      require "minitest/focus"
+      require "minitest/rg"
+
+      test_files.flatten.each { |file| require File.expand_path(file.to_s) }
+
+      require "minitest/autorun"
+      exit
+    end
   end
 end
