@@ -20,7 +20,7 @@ module MightyTest
     attr_reader :path
 
     def match_minitest_method_name(line)
-      line[/^\s+(?:focus\s+)?def (test_\w+)/, 1]
+      line[/^\s*(?:focus\s+)?def\s+(test_\w+)/, 1]
     end
 
     def match_active_support_test_string(line)
