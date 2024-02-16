@@ -1,5 +1,6 @@
 module MightyTest
-  autoload :CLI, "mighty_test/cli"
   autoload :VERSION, "mighty_test/version"
-  autoload :ThorExt, "mighty_test/thor_ext"
+  autoload :CLI, "mighty_test/cli"
+  autoload :MinitestRunner, "mighty_test/minitest_runner"
+  autoload :OptionParser, "mighty_test/option_parser"
 end

@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
 
 require "mighty_test"
-MightyTest::CLI.start(ARGV)
+MightyTest::CLI.new.run
