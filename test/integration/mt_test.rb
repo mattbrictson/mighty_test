@@ -2,6 +2,8 @@ require "test_helper"
 
 module MightyTest
   class MtTest < Minitest::Test
+    include FixturesPath
+
     def test_mt_can_run_and_print_version
       result = bundle_exec_mt(argv: ["--version"])
 
@@ -9,7 +11,7 @@ module MightyTest
     end
 
     def test_mt_runs_a_successful_test
-      project_dir = File.expand_path("../fixtures/example_project", __dir__)
+      project_dir = fixtures_path.join("example_project")
       result = bundle_exec_mt(argv: ["test/example_test.rb"], chdir: project_dir)
 
       assert_match(/Run options:.* --seed \d+/, result.stdout)
@@ -18,7 +20,7 @@ module MightyTest
     end
 
     def test_mt_runs_a_failing_test_and_exits_with_non_zero_status
-      project_dir = File.expand_path("../fixtures/example_project", __dir__)
+      project_dir = fixtures_path.join("example_project")
       result = bundle_exec_mt(argv: ["test/failing_test.rb"], chdir: project_dir, raise_on_failure: false)
 
       assert_predicate(result, :failure?)
