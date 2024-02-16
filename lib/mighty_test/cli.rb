@@ -1,14 +1,43 @@
-require "thor"
-
 module MightyTest
-  class CLI < Thor
-    extend ThorExt::Start
+  class CLI
+    def initialize(env: ENV, option_parser: OptionParser.new, runner: MinitestRunner.new)
+      @env = env.to_h
+      @option_parser = option_parser
+      @runner = runner
+    end
 
-    map %w[-v --version] => "version"
+    def run(argv: ARGV)
+      @path_args, @extra_args, @options = option_parser.parse(argv)
 
-    desc "version", "Display mighty_test version", hide: true
-    def version
-      say "mighty_test/#{VERSION} #{RUBY_DESCRIPTION}"
+      if options[:help]
+        print_help
+      elsif options[:version]
+        puts VERSION
+      end
+    rescue Exception => e # rubocop:disable Lint/RescueException
+      handle_exception(e)
+    end
+
+    private
+
+    attr_reader :env, :path_args, :extra_args, :options, :option_parser, :runner
+
+    def print_help
+      # Minitest already prints the `-h, --help` option, so omit mighty_test's
+      puts option_parser.to_s.sub(/^\s*-h.*?\n/, "")
+      puts
+      runner.print_help_and_exit!
+    end
+
+    def handle_exception(e) # rubocop:disable Naming/MethodParameterName
+      case e
+      when SignalException
+        exit(128 + e.signo)
+      when Errno::EPIPE
+        # pass
+      else
+        raise e
+      end
     end
   end
 end

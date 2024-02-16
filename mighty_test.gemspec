@@ -26,5 +26,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
-  spec.add_dependency "thor", "~> 1.2"
+  spec.add_dependency "minitest", "~> 5.15"
 end
