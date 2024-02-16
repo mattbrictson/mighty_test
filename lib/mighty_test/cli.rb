@@ -13,6 +13,8 @@ module MightyTest
         print_help
       elsif options[:version]
         puts VERSION
+      elsif path_args.grep(/.:\d+$/).any?
+        run_test_by_line_number
       else
         run_tests_by_path
       end
@@ -29,6 +31,17 @@ module MightyTest
       puts option_parser.to_s.sub(/^\s*-h.*?\n/, "")
       puts
       runner.print_help_and_exit!
+    end
+
+    def run_test_by_line_number
+      path, line = path_args.first.match(/^(.+):(\d+)$/).captures
+      test_name = TestParser.new(path).test_name_at_line(line.to_i)
+
+      if test_name
+        runner.run_inline_and_exit!(path, args: ["-n", "/^#{Regexp.quote(test_name)}$/"] + extra_args)
+      else
+        runner.run_inline_and_exit!(args: extra_args)
+      end
     end
 
     def run_tests_by_path
