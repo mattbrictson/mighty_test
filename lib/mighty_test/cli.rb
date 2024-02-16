@@ -13,6 +13,8 @@ module MightyTest
         print_help
       elsif options[:version]
         puts VERSION
+      else
+        run_tests_by_path
       end
     rescue Exception => e # rubocop:disable Lint/RescueException
       handle_exception(e)
@@ -27,6 +29,10 @@ module MightyTest
       puts option_parser.to_s.sub(/^\s*-h.*?\n/, "")
       puts
       runner.print_help_and_exit!
+    end
+
+    def run_tests_by_path
+      runner.run_inline_and_exit!(*path_args, args: extra_args)
     end
 
     def handle_exception(e) # rubocop:disable Naming/MethodParameterName
