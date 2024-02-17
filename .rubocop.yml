@@ -48,6 +48,10 @@ Layout/MultilineMethodCallIndentation:
 Layout/SpaceAroundEqualsInParameterDefault:
   EnforcedStyle: no_space
 
+Lint/EmptyFile:
+  Exclude:
+    - "test/fixtures/**/*"
+
 Metrics/AbcSize:
   Max: 20
   Exclude:
