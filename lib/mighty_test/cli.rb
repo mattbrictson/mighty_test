@@ -13,6 +13,8 @@ module MightyTest
         print_help
       elsif options[:version]
         puts VERSION
+      elsif options[:watch]
+        watch
       elsif path_args.grep(/.:\d+$/).any?
         run_test_by_line_number
       else
@@ -31,6 +33,10 @@ module MightyTest
       puts option_parser.to_s.sub(/^\s*-h.*?\n/, "")
       puts
       runner.print_help_and_exit!
+    end
+
+    def watch
+      Watcher.new(extra_args:).run
     end
 
     def run_test_by_line_number
