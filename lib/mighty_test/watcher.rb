@@ -15,8 +15,7 @@ module MightyTest
       start_listener
       puts WATCHING_FOR_CHANGES
 
-      loop = iterations == :indefinitely ? method(:loop) : iterations.method(:times)
-      loop.call do
+      loop_for(iterations) do
         case await_next_event
         in [:file_system_changed, paths]
           mt(*paths) if paths.any?
@@ -55,6 +54,10 @@ module MightyTest
       end
     end
     alias restart_listener start_listener
+
+    def loop_for(iterations, &)
+      iterations == :indefinitely ? loop(&) : iterations.times(&)
+    end
 
     def await_next_event
       listener.start if listener.paused?
