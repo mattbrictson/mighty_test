@@ -1,15 +1,17 @@
+require "optparse"
+
 module MightyTest
   class OptionParser
     def initialize
-      require "optparse"
-
       @parser = ::OptionParser.new do |op|
         op.require_exact = true
         op.banner = <<~BANNER
           Usage: mt <test file>...
+                 mt --watch
 
         BANNER
 
+        op.on("--watch") { options[:watch] = true }
         op.on("-h", "--help") { options[:help] = true }
         op.on("--version") { options[:version] = true }
       end

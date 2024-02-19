@@ -57,6 +57,28 @@ module MightyTest
       refute_match(/FailingTest/, result.stdout)
     end
 
+    def test_mt_runs_watch_mode_that_executes_tests_when_files_change
+      project_dir = fixtures_path.join("example_project")
+      stdout, = capture_subprocess_io do
+        # Start mt --watch in the background
+        pid = spawn(*%w[bundle exec mt --watch --verbose], chdir: project_dir)
+
+        # mt needs time to launch and start its file system listener
+        sleep 1
+
+        # Touch a file and wait for mt --watch to detect the change and run the corresponding test
+        FileUtils.touch project_dir.join("lib/example.rb")
+        sleep 1
+
+        # OK, we're done here. Tell mt --watch to exit.
+        Process.kill(:INT, pid)
+      end
+
+      assert_includes(stdout, "Watching for changes to source and test files.")
+      assert_match(/ExampleTest/, stdout)
+      assert_match(/\d runs, \d assertions, 0 failures, 0 errors/, stdout)
+    end
+
     private
 
     def bundle_exec_mt(argv:, env: { "CI" => nil }, chdir: nil, raise_on_failure: true)
