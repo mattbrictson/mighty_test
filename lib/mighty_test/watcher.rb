@@ -4,8 +4,9 @@ module MightyTest
   class Watcher
     WATCHING_FOR_CHANGES = "Watching for changes to source and test files. Press ctrl-c to exit.".freeze
 
-    def initialize(extra_args: [], file_system: FileSystem.new, system_proc: method(:system))
+    def initialize(console: Console.new, extra_args: [], file_system: FileSystem.new, system_proc: method(:system))
       @event = Concurrent::MVar.new
+      @console = console
       @extra_args = extra_args
       @file_system = file_system
       @system_proc = system_proc
@@ -19,19 +20,23 @@ module MightyTest
         case await_next_event
         in [:file_system_changed, paths]
           mt(*paths) if paths.any?
-        in [:tests_completed, :pass | :fail]
-          puts WATCHING_FOR_CHANGES
+        in [:tests_completed, status]
+          console.play_sound(status)
+          puts "\n#{WATCHING_FOR_CHANGES}"
         end
       end
     ensure
+      puts "\nExiting."
       listener&.stop
     end
 
     private
 
-    attr_reader :extra_args, :file_system, :listener, :system_proc
+    attr_reader :console, :extra_args, :file_system, :listener, :system_proc
 
     def mt(*test_paths)
+      console.clear
+      puts [*test_paths.join("\n"), ""] if test_paths.any?
       success = system_proc.call("mt", *extra_args, "--", *test_paths.flatten)
       post_event(:tests_completed, success ? :pass : :fail)
     rescue Interrupt
