@@ -47,7 +47,10 @@ module MightyTest
     end
 
     def test_play_sound_raises_argument_error_if_invalid_sound_name_is_specified
-      assert_raises(ArgumentError) { Console.new.play_sound(:whatever) }
+      capture_io do
+        $stdout.define_singleton_method(:tty?) { true }
+        assert_raises(ArgumentError) { Console.new.play_sound(:whatever) }
+      end
     end
 
     def test_play_sound_calls_sound_player_with_matching_sound_path
