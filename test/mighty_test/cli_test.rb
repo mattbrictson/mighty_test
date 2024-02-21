@@ -2,6 +2,8 @@ require "test_helper"
 
 module MightyTest
   class CLITest < Minitest::Test
+    include FixturesPath
+
     def test_help_flag_prints_usage_and_minitest_options
       result = cli_run(argv: ["--help"])
 
@@ -27,15 +29,96 @@ module MightyTest
       assert_equal(VERSION, result.stdout.chomp)
     end
 
+    def test_with_no_args_runs_all_tests_in_the_test_directory
+      with_fake_minitest_runner do |runner, executed_tests|
+        cli_run(argv: [], chdir: fixtures_path.join("rails_project"), runner:)
+
+        assert_equal(
+          %w[
+            test/helpers/users_helper_test.rb
+            test/models/account_test.rb
+            test/models/user_test.rb
+            test/system/users_system_test.rb
+          ],
+          executed_tests.sort
+        )
+      end
+    end
+
+    def test_with_a_directory_arg_runs_all_test_files_in_that_directory
+      with_fake_minitest_runner do |runner, executed_tests|
+        cli_run(argv: ["test/models"], chdir: fixtures_path.join("rails_project"), runner:)
+
+        assert_equal(
+          %w[
+            test/models/account_test.rb
+            test/models/user_test.rb
+          ],
+          executed_tests.sort
+        )
+      end
+    end
+
+    def test_with_a_mixture_of_file_and_directory_args_runs_all_matching_tests
+      with_fake_minitest_runner do |runner, executed_tests|
+        cli_run(argv: %w[test/system test/models/user_test.rb], chdir: fixtures_path.join("rails_project"), runner:)
+
+        assert_equal(
+          %w[
+            test/models/user_test.rb
+            test/system/users_system_test.rb
+          ],
+          executed_tests.sort
+        )
+      end
+    end
+
+    def test_with_explict_file_args_runs_those_files_regardless_of_whether_they_appear_to_be_tests
+      with_fake_minitest_runner do |runner, executed_tests|
+        cli_run(argv: ["app/models/user.rb"], chdir: fixtures_path.join("rails_project"), runner:)
+
+        assert_equal(
+          %w[
+            app/models/user.rb
+          ],
+          executed_tests.sort
+        )
+      end
+    end
+
+    def test_with_directory_args_only_runs_files_that_appear_to_be_tests
+      with_fake_minitest_runner do |runner, executed_tests|
+        cli_run(argv: ["app/models"], chdir: fixtures_path.join("rails_project"), runner:)
+
+        assert_empty(executed_tests)
+      end
+    end
+
+    def test_with_non_existent_path_raises_an_error
+      error = assert_raises(ArgumentError) do
+        cli_run(argv: ["test/models/non_existent_test.rb"], chdir: fixtures_path.join("rails_project"))
+      end
+
+      assert_includes(error.message, "test/models/non_existent_test.rb does not exist")
+    end
+
     private
 
-    def cli_run(argv:, env: {}, stdin: nil, raise_on_failure: true)
+    def with_fake_minitest_runner
+      executed_tests = []
+      runner = MinitestRunner.new
+      runner.stub(:run_inline_and_exit!, ->(*test_files, **) { executed_tests.append(*test_files.flatten) }) do
+        yield(runner, executed_tests)
+      end
+    end
+
+    def cli_run(argv:, env: {}, chdir: ".", runner: nil, raise_on_failure: true)
       exitstatus = true
-      orig_stdin = $stdin
-      $stdin = StringIO.new(stdin) if stdin
 
       stdout, stderr = capture_io do
-        CLI.new(env:).run(argv:)
+        Dir.chdir(chdir) do
+          CLI.new(**{ env:, runner: }.compact).run(argv:)
+        end
       rescue SystemExit => e
         exitstatus = e.status
       end
@@ -44,8 +127,6 @@ module MightyTest
       raise "CLI exited with status: #{exitstatus}" if raise_on_failure && result.failure?
 
       result
-    ensure
-      $stdin = orig_stdin
     end
   end
 end
