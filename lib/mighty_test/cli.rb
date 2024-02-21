@@ -1,6 +1,7 @@
 module MightyTest
   class CLI
-    def initialize(env: ENV, option_parser: OptionParser.new, runner: MinitestRunner.new)
+    def initialize(file_system: FileSystem.new, env: ENV, option_parser: OptionParser.new, runner: MinitestRunner.new)
+      @file_system = file_system
       @env = env.to_h
       @option_parser = option_parser
       @runner = runner
@@ -26,7 +27,7 @@ module MightyTest
 
     private
 
-    attr_reader :env, :path_args, :extra_args, :options, :option_parser, :runner
+    attr_reader :file_system, :env, :path_args, :extra_args, :options, :option_parser, :runner
 
     def print_help
       # Minitest already prints the `-h, --help` option, so omit mighty_test's
@@ -44,14 +45,33 @@ module MightyTest
       test_name = TestParser.new(path).test_name_at_line(line.to_i)
 
       if test_name
-        runner.run_inline_and_exit!(path, args: ["-n", "/^#{Regexp.quote(test_name)}$/"] + extra_args)
+        run_tests_and_exit!(path, flags: ["-n", "/^#{Regexp.quote(test_name)}$/"])
       else
-        runner.run_inline_and_exit!(args: extra_args)
+        run_tests_and_exit!
       end
     end
 
     def run_tests_by_path
-      runner.run_inline_and_exit!(*path_args, args: extra_args)
+      test_paths = find_test_paths
+      run_tests_and_exit!(*test_paths)
+    end
+
+    def find_test_paths
+      return file_system.find_test_paths if path_args.empty?
+
+      path_args.flat_map do |path|
+        if Dir.exist?(path)
+          file_system.find_test_paths(path)
+        elsif File.exist?(path)
+          [path]
+        else
+          raise ArgumentError, "#{path} does not exist"
+        end
+      end
+    end
+
+    def run_tests_and_exit!(*test_paths, flags: [])
+      runner.run_inline_and_exit!(*test_paths, args: extra_args + flags)
     end
 
     def handle_exception(e) # rubocop:disable Naming/MethodParameterName
