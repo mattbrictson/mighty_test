@@ -71,6 +71,47 @@ module MightyTest
       )
     end
 
+    def test_find_new_and_changed_paths_returns_empty_array_if_git_exits_with_error
+      status = Minitest::Mock.new
+      status.expect(:success?, false)
+
+      paths = Open3.stub(:capture3, ["", "oh no!", status]) do
+        FileSystem.new.find_new_and_changed_paths
+      end
+
+      assert_empty paths
+    end
+
+    def test_find_new_and_changed_paths_returns_empty_array_if_system_call_fails
+      paths = Open3.stub(:capture3, ->(*) { raise SystemCallError, "oh no!" }) do
+        FileSystem.new.find_new_and_changed_paths
+      end
+
+      assert_empty paths
+    end
+
+    def test_find_new_and_changed_paths_returns_array_based_on_git_output
+      git_output = <<~OUT
+        lib/mighty_test/file_system.rb
+        test/mighty_test/file_system_test.rb
+      OUT
+
+      status = Minitest::Mock.new
+      status.expect(:success?, true)
+
+      paths = Open3.stub(:capture3, [git_output, "", status]) do
+        FileSystem.new.find_new_and_changed_paths
+      end
+
+      assert_equal(
+        %w[
+          lib/mighty_test/file_system.rb
+          test/mighty_test/file_system_test.rb
+        ],
+        paths
+      )
+    end
+
     private
 
     def find_matching_test_path(path, in: ".")

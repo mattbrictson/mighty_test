@@ -124,6 +124,43 @@ module MightyTest
       EXPECTED
     end
 
+    def test_watcher_runs_new_and_changed_files_according_to_git_when_d_key_is_pressed
+      system_proc do |*args|
+        puts "[SYSTEM] #{args.join(' ')}"
+        true
+      end
+
+      file_system = FileSystem.new
+      stdout, = file_system.stub(:find_new_and_changed_paths, %w[lib/example.rb]) do
+        run_watcher(file_system:, stdin: "dq", in: fixtures_path.join("example_project"))
+      end
+
+      assert_includes(stdout, <<~EXPECTED)
+        [CLEAR]
+        test/example_test.rb
+
+        [SYSTEM] mt -- test/example_test.rb
+      EXPECTED
+    end
+
+    def test_watcher_shows_a_message_if_d_key_is_pressed_and_there_are_no_changes
+      system_proc do |*args|
+        puts "[SYSTEM] #{args.join(' ')}"
+        true
+      end
+
+      file_system = FileSystem.new
+      stdout, = file_system.stub(:find_new_and_changed_paths, []) do
+        run_watcher(file_system:, stdin: "dq", in: fixtures_path.join("example_project"))
+      end
+
+      assert_includes(stdout, <<~EXPECTED)
+        [CLEAR]
+        No affected test files detected since the last git commit.
+        Watching for changes to source and test files. Press "q" to quit.
+      EXPECTED
+    end
+
     private
 
     class Listener
@@ -151,12 +188,11 @@ module MightyTest
       end
     end
 
-    def run_watcher(iterations: :indefinitely, in: ".", extra_args: [], stdin: nil)
+    def run_watcher(iterations: :indefinitely, in: ".", extra_args: [], stdin: nil, file_system: FileSystem.new)
       listen_thread = @listen_thread
       console = Console.new(stdin: stdin.nil? ? File::NULL : StringIO.new(stdin))
       console.define_singleton_method(:clear) { puts "[CLEAR]" }
       console.define_singleton_method(:play_sound) { |sound| puts "[SOUND] #{sound.inspect}" }
-      file_system = FileSystem.new
       file_system.define_singleton_method(:listen) { |&callback| Listener.new(listen_thread, callback) }
 
       capture_io do
