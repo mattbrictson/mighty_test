@@ -62,13 +62,13 @@ module MightyTest
         callback.call(["test/example_test.rb"], [], [])
       end
 
-      stdout, = run_watcher(iterations: 2, in: fixtures_path.join("example_project"))
+      stdout, = run_watcher(iterations: 1, in: fixtures_path.join("example_project"))
 
       assert_includes(stdout, <<~EXPECTED)
         [SYSTEM] mt -- test/example_test.rb
         [SOUND] :pass
 
-        Watching for changes to source and test files. Press ctrl-c to exit.
+        Watching for changes to source and test files. Press "q" to quit.
       EXPECTED
     end
 
@@ -81,13 +81,13 @@ module MightyTest
         callback.call(["test/example_test.rb"], [], [])
       end
 
-      stdout, = run_watcher(iterations: 2, in: fixtures_path.join("example_project"))
+      stdout, = run_watcher(iterations: 1, in: fixtures_path.join("example_project"))
 
       assert_includes(stdout, <<~EXPECTED)
         [SYSTEM] mt -- test/example_test.rb
         [SOUND] :fail
 
-        Watching for changes to source and test files. Press ctrl-c to exit.
+        Watching for changes to source and test files. Press "q" to quit.
       EXPECTED
     end
 
@@ -103,12 +103,33 @@ module MightyTest
       assert_equal(2, thread_count)
     end
 
+    def test_watcher_exits_when_q_key_is_pressed
+      stdout, = run_watcher(stdin: "q", in: fixtures_path.join("example_project"))
+
+      assert_includes(stdout, "Exiting.")
+    end
+
+    def test_watcher_runs_all_tests_when_enter_key_is_pressed
+      system_proc do |*args|
+        puts "[SYSTEM] #{args.join(' ')}"
+        true
+      end
+
+      stdout, = run_watcher(stdin: "\rq", in: fixtures_path.join("example_project"))
+
+      assert_includes(stdout, <<~EXPECTED)
+        Running all tests...
+
+        [SYSTEM] mt
+      EXPECTED
+    end
+
     private
 
     class Listener
       def initialize(thread, callback)
         Thread.new do
-          thread.call(callback)
+          thread&.call(callback)
         end
       end
 
@@ -130,13 +151,14 @@ module MightyTest
       end
     end
 
-    def run_watcher(iterations:, in: ".", extra_args: [])
+    def run_watcher(iterations: :indefinitely, in: ".", extra_args: [], stdin: nil)
       listen_thread = @listen_thread
-      console = Console.new
+      console = Console.new(stdin: stdin.nil? ? File::NULL : StringIO.new(stdin))
       console.define_singleton_method(:clear) { puts "[CLEAR]" }
       console.define_singleton_method(:play_sound) { |sound| puts "[SOUND] #{sound.inspect}" }
       file_system = FileSystem.new
       file_system.define_singleton_method(:listen) { |&callback| Listener.new(listen_thread, callback) }
+
       capture_io do
         Dir.chdir(binding.local_variable_get(:in)) do
           @watcher = Watcher.new(console:, extra_args:, file_system:, system_proc: @system_proc)

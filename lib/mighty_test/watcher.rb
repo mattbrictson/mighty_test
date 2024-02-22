@@ -2,7 +2,7 @@ require "concurrent"
 
 module MightyTest
   class Watcher
-    WATCHING_FOR_CHANGES = "Watching for changes to source and test files. Press ctrl-c to exit.".freeze
+    WATCHING_FOR_CHANGES = 'Watching for changes to source and test files. Press "q" to quit.'.freeze
 
     def initialize(console: Console.new, extra_args: [], file_system: FileSystem.new, system_proc: method(:system))
       @event = Concurrent::MVar.new
@@ -12,17 +12,25 @@ module MightyTest
       @system_proc = system_proc
     end
 
-    def run(iterations: :indefinitely)
-      start_listener
+    def run(iterations: :indefinitely) # rubocop:disable Metrics/MethodLength
+      start_file_system_listener
+      start_keypress_listener
       puts WATCHING_FOR_CHANGES
 
       loop_for(iterations) do
         case await_next_event
-        in [:file_system_changed, paths]
-          mt(*paths) if paths.any?
-        in [:tests_completed, status]
-          console.play_sound(status)
-          puts "\n#{WATCHING_FOR_CHANGES}"
+        in [:file_system_changed, [_, *] => paths]
+          console.clear
+          puts [*paths.join("\n"), ""]
+          mt(*paths)
+        in [:keypress, "\r" | "\n"]
+          console.clear
+          puts "Running all tests...\n\n"
+          mt
+        in [:keypress, "q"]
+          break
+        else
+          nil
         end
       end
     ensure
@@ -35,16 +43,19 @@ module MightyTest
     attr_reader :console, :extra_args, :file_system, :listener, :system_proc
 
     def mt(*test_paths)
-      console.clear
-      puts [*test_paths.join("\n"), ""] if test_paths.any?
-      success = system_proc.call("mt", *extra_args, "--", *test_paths.flatten)
-      post_event(:tests_completed, success ? :pass : :fail)
+      command = ["mt", *extra_args]
+      command.append("--", *test_paths.flatten) if test_paths.any?
+
+      success = system_proc.call(*command)
+
+      console.play_sound(success ? :pass : :fail)
+      puts "\n#{WATCHING_FOR_CHANGES}"
     rescue Interrupt
       # Pressing ctrl-c kills the fs_event background process, so we have to manually restart it.
-      restart_listener
+      restart_file_system_listener
     end
 
-    def start_listener
+    def start_file_system_listener
       listener.stop if listener && !listener.stopped?
 
       @listener = file_system.listen do |modified, added, _removed|
@@ -58,7 +69,20 @@ module MightyTest
         post_event(:file_system_changed, test_paths.uniq)
       end
     end
-    alias restart_listener start_listener
+    alias restart_file_system_listener start_file_system_listener
+
+    def start_keypress_listener
+      Thread.new do
+        loop do
+          key = console.wait_for_keypress
+          post_event(:keypress, key)
+        rescue Interrupt
+          retry
+        end
+      rescue StandardError
+        # ignore
+      end
+    end
 
     def loop_for(iterations, &)
       iterations == :indefinitely ? loop(&) : iterations.times(&)

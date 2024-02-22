@@ -2,7 +2,8 @@ require "io/console"
 
 module MightyTest
   class Console
-    def initialize(sound_player: "/usr/bin/afplay", sound_paths: SOUNDS)
+    def initialize(stdin: $stdin, sound_player: "/usr/bin/afplay", sound_paths: SOUNDS)
+      @stdin = stdin
       @sound_player = sound_player
       @sound_paths = sound_paths
     end
@@ -12,6 +13,12 @@ module MightyTest
 
       $stdout.clear_screen
       true
+    end
+
+    def wait_for_keypress
+      return stdin.getc unless stdin.respond_to?(:raw)
+
+      stdin.raw(intr: true) { stdin.getc }
     end
 
     def play_sound(name, wait: false)
@@ -42,7 +49,7 @@ module MightyTest
     private_constant :SOUNDS
     # rubocop:enable Layout/LineLength
 
-    attr_reader :sound_player, :sound_paths
+    attr_reader :sound_player, :sound_paths, :stdin
 
     def tty?
       $stdout.respond_to?(:tty?) && $stdout.tty?
