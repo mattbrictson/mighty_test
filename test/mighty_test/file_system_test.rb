@@ -1,4 +1,5 @@
 require "test_helper"
+require "open3"
 
 module MightyTest
   class FileSystemTest < Minitest::Test
