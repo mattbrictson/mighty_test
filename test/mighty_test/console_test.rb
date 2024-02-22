@@ -20,6 +20,12 @@ module MightyTest
       assert_equal "clear!", stdout
     end
 
+    def test_wait_for_keypress_returns_the_next_character_on_stdin
+      console = Console.new(stdin: StringIO.new("hi"))
+
+      assert_equal "h", console.wait_for_keypress
+    end
+
     def test_play_sound_returns_false_if_not_tty
       result = nil
       capture_io { result = Console.new.play_sound(:pass) }
