@@ -21,6 +21,10 @@ module MightyTest
       assert_nil find_matching_test_path("lib/example/version.rb", in: fixtures_path.join("example_project"))
     end
 
+    def test_find_matching_test_path_returns_nil_for_non_lib_path
+      assert_nil find_matching_test_path("Gemfile", in: fixtures_path.join("example_project"))
+    end
+
     def test_find_matching_test_path_returns_nil_for_a_test_support_file
       assert_nil find_matching_test_path("test/test_helper.rb", in: fixtures_path.join("example_project"))
     end
