@@ -20,14 +20,11 @@ module MightyTest
       loop_for(iterations) do
         case await_next_event
         in [:file_system_changed, [_, *] => paths]
-          console.clear
-          puts paths.join("\n")
-          puts
-          mt(*paths)
+          run_matching_test_files(paths)
         in [:keypress, "\r" | "\n"]
-          console.clear
-          puts "Running all tests...\n\n"
-          mt
+          run_all_tests
+        in [:keypress, "d"]
+          run_matching_test_files_from_git_diff
         in [:keypress, "q"]
           break
         else
@@ -42,6 +39,32 @@ module MightyTest
     private
 
     attr_reader :console, :extra_args, :file_system, :listener, :system_proc
+
+    def run_all_tests
+      console.clear
+      puts "Running all tests..."
+      puts
+      mt
+    end
+
+    def run_matching_test_files(paths)
+      test_paths = paths.flat_map { |path| file_system.find_matching_test_path(path) }.compact.uniq
+      return false if test_paths.empty?
+
+      console.clear
+      puts test_paths.join("\n")
+      puts
+      mt(*test_paths)
+      true
+    end
+
+    def run_matching_test_files_from_git_diff
+      return if run_matching_test_files(file_system.find_new_and_changed_paths)
+
+      console.clear
+      puts "No affected test files detected since the last git commit."
+      puts WATCHING_FOR_CHANGES
+    end
 
     def mt(*test_paths)
       command = ["mt", *extra_args]
@@ -63,12 +86,7 @@ module MightyTest
       @listener = file_system.listen do |modified, added, _removed|
         # Pause listener so that subsequent changes are queued up while we are running the tests
         listener.pause unless listener.stopped?
-
-        test_paths = [*modified, *added].filter_map do |path|
-          file_system.find_matching_test_path(path)
-        end
-
-        post_event(:file_system_changed, test_paths.uniq)
+        post_event(:file_system_changed, [*modified, *added].uniq)
       end
     end
     alias restart_file_system_listener start_file_system_listener

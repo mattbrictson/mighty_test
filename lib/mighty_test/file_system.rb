@@ -1,3 +1,5 @@
+require "open3"
+
 module MightyTest
   class FileSystem
     def listen(&)
@@ -16,6 +18,15 @@ module MightyTest
     def find_test_paths(directory="test")
       glob = File.join(directory, "**/*_test.rb")
       Dir[glob]
+    end
+
+    def find_new_and_changed_paths
+      out, _err, status = Open3.capture3(*%w[git ls-files --deduplicate -m -o --exclude-standard test app lib])
+      return [] unless status.success?
+
+      out.lines(chomp: true).reject(&:empty?).uniq
+    rescue SystemCallError
+      []
     end
   end
 end
