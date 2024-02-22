@@ -21,7 +21,8 @@ module MightyTest
         case await_next_event
         in [:file_system_changed, [_, *] => paths]
           console.clear
-          puts [*paths.join("\n"), ""]
+          puts paths.join("\n")
+          puts
           mt(*paths)
         in [:keypress, "\r" | "\n"]
           console.clear
@@ -50,6 +51,7 @@ module MightyTest
 
       console.play_sound(success ? :pass : :fail)
       puts "\n#{WATCHING_FOR_CHANGES}"
+      $stdout.flush
     rescue Interrupt
       # Pressing ctrl-c kills the fs_event background process, so we have to manually restart it.
       restart_file_system_listener

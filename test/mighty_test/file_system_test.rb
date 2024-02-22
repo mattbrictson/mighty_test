@@ -39,11 +39,49 @@ module MightyTest
       assert_equal("test/models/user_test.rb", test_path)
     end
 
+    def test_find_test_paths_looks_in_test_directory_by_default
+      test_paths = find_test_paths(in: fixtures_path.join("rails_project"))
+
+      assert_equal(
+        %w[
+          test/helpers/users_helper_test.rb
+          test/models/account_test.rb
+          test/models/user_test.rb
+          test/system/users_system_test.rb
+        ],
+        test_paths.sort
+      )
+    end
+
+    def test_find_test_paths_returns_empty_array_if_given_non_existent_path
+      test_paths = find_test_paths("path/to/nowhere", in: fixtures_path.join("rails_project"))
+
+      assert_empty(test_paths)
+    end
+
+    def test_find_test_paths_returns_test_files_in_specific_directory
+      test_paths = find_test_paths("test/models", in: fixtures_path.join("rails_project"))
+
+      assert_equal(
+        %w[
+          test/models/account_test.rb
+          test/models/user_test.rb
+        ],
+        test_paths.sort
+      )
+    end
+
     private
 
     def find_matching_test_file(path, in: ".")
       Dir.chdir(binding.local_variable_get(:in)) do
         FileSystem.new.find_matching_test_file(path)
+      end
+    end
+
+    def find_test_paths(*path, in: ".")
+      Dir.chdir(binding.local_variable_get(:in)) do
+        FileSystem.new.find_test_paths(*path)
       end
     end
   end
