@@ -71,7 +71,7 @@ module MightyTest
         sleep 1
 
         # OK, we're done here. Tell mt --watch to exit.
-        Process.kill(:INT, pid)
+        Process.kill(:TERM, pid)
       end
 
       assert_includes(stdout, "Watching for changes to source and test files.")
