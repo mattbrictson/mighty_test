@@ -190,7 +190,7 @@ module MightyTest
 
     def run_watcher(iterations: :indefinitely, in: ".", extra_args: [], stdin: nil, file_system: FileSystem.new)
       listen_thread = @listen_thread
-      console = Console.new(stdin: stdin.nil? ? File::NULL : StringIO.new(stdin))
+      console = Console.new(stdin: stdin.nil? ? StringIO.new("") : StringIO.new(stdin))
       console.define_singleton_method(:clear) { puts "[CLEAR]" }
       console.define_singleton_method(:play_sound) { |sound| puts "[SOUND] #{sound.inspect}" }
       file_system.define_singleton_method(:listen) { |&callback| Listener.new(listen_thread, callback) }
