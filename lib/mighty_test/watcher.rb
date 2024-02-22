@@ -33,12 +33,13 @@ module MightyTest
       end
     ensure
       puts "\nExiting."
-      listener&.stop
+      file_system_listener&.stop
+      keypress_listener&.kill
     end
 
     private
 
-    attr_reader :console, :extra_args, :file_system, :listener, :system_proc
+    attr_reader :console, :extra_args, :file_system, :file_system_listener, :keypress_listener, :system_proc
 
     def run_all_tests
       console.clear
@@ -81,26 +82,24 @@ module MightyTest
     end
 
     def start_file_system_listener
-      listener.stop if listener && !listener.stopped?
+      file_system_listener.stop if file_system_listener && !file_system_listener.stopped?
 
-      @listener = file_system.listen do |modified, added, _removed|
+      @file_system_listener = file_system.listen do |modified, added, _removed|
         # Pause listener so that subsequent changes are queued up while we are running the tests
-        listener.pause unless listener.stopped?
+        file_system_listener.pause unless file_system_listener.stopped?
         post_event(:file_system_changed, [*modified, *added].uniq)
       end
     end
     alias restart_file_system_listener start_file_system_listener
 
     def start_keypress_listener
-      Thread.new do
+      @keypress_listener = Thread.new do
         loop do
           key = console.wait_for_keypress
-          post_event(:keypress, key)
+          post_event(:keypress, key) if key
         rescue Interrupt
           retry
         end
-      rescue StandardError
-        # ignore
       end
     end
 
@@ -109,7 +108,7 @@ module MightyTest
     end
 
     def await_next_event
-      listener.start if listener.paused?
+      file_system_listener.start if file_system_listener.paused?
       @event.take
     end
 
