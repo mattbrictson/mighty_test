@@ -65,7 +65,7 @@ module MightyTest
         listener.pause unless listener.stopped?
 
         test_paths = [*modified, *added].filter_map do |path|
-          file_system.find_matching_test_file(path)
+          file_system.find_matching_test_path(path)
         end
 
         post_event(:file_system_changed, test_paths.uniq)
