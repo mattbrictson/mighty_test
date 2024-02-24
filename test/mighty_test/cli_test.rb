@@ -29,9 +29,40 @@ module MightyTest
       assert_equal(VERSION, result.stdout.chomp)
     end
 
-    def test_with_no_args_runs_all_tests_in_the_test_directory
+    def test_with_no_args_runs_all_tests_in_the_test_directory_excluding_slow_ones
       with_fake_minitest_runner do |runner, executed_tests|
         cli_run(argv: [], chdir: fixtures_path.join("rails_project"), runner:)
+
+        assert_equal(
+          %w[
+            test/helpers/users_helper_test.rb
+            test/models/account_test.rb
+            test/models/user_test.rb
+          ],
+          executed_tests.sort
+        )
+      end
+    end
+
+    def test_with_all_flag_runs_all_tests_in_the_test_directory_including_slow_ones
+      with_fake_minitest_runner do |runner, executed_tests|
+        cli_run(argv: ["--all"], chdir: fixtures_path.join("rails_project"), runner:)
+
+        assert_equal(
+          %w[
+            test/helpers/users_helper_test.rb
+            test/models/account_test.rb
+            test/models/user_test.rb
+            test/system/users_system_test.rb
+          ],
+          executed_tests.sort
+        )
+      end
+    end
+
+    def test_with_ci_env_runs_all_tests_in_the_test_directory_including_slow_ones
+      with_fake_minitest_runner do |runner, executed_tests|
+        cli_run(argv: [], env: { "CI" => "1" }, chdir: fixtures_path.join("rails_project"), runner:)
 
         assert_equal(
           %w[
