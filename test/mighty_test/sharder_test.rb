@@ -34,7 +34,7 @@ module MightyTest
     end
 
     def test_it_has_a_default_hardcoded_seed
-      sharder = Sharder.from_argv("1/2")
+      sharder = Sharder.from_argv("1/2", env: {})
       assert_equal(123_456_789, sharder.seed)
     end
 
