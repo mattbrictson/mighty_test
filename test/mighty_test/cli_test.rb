@@ -102,6 +102,26 @@ module MightyTest
       assert_includes(error.message, "test/models/non_existent_test.rb does not exist")
     end
 
+    def test_divides_tests_into_shards
+      all = with_fake_minitest_runner do |runner, executed_tests|
+        cli_run(argv: [], chdir: fixtures_path.join("rails_project"), runner:)
+        executed_tests
+      end
+
+      shards = %w[1/2 2/2].map do |shard|
+        with_fake_minitest_runner do |runner, executed_tests|
+          cli_run(argv: ["--shard", shard], chdir: fixtures_path.join("rails_project"), runner:)
+          executed_tests
+        end
+      end
+
+      shards.each do |shard|
+        refute_empty shard
+      end
+
+      assert_equal all.length, shards.sum(&:length)
+    end
+
     private
 
     def with_fake_minitest_runner
