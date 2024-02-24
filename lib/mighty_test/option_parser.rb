@@ -13,6 +13,7 @@ module MightyTest
         BANNER
 
         op.on("--watch") { options[:watch] = true }
+        op.on("--shard SHARD") { |value| options[:shard] = value }
         op.on("-h", "--help") { options[:help] = true }
         op.on("--version") { options[:version] = true }
       end

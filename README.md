@@ -5,7 +5,7 @@
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/mattbrictson/mighty_test/ci.yml)](https://github.com/mattbrictson/mighty_test/actions/workflows/ci.yml)
 [![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/mattbrictson/mighty_test)](https://codeclimate.com/github/mattbrictson/mighty_test)
 
-mighty_test (`mt`) is a TDD-friendly Minitest runner for Ruby projects. It includes a Jest-inspired interactive watch mode, focus mode, CI parallelization, run by directory/file/line number, fail-fast, and color formatting.
+mighty_test (`mt`) is a TDD-friendly Minitest runner for Ruby projects. It includes a Jest-inspired interactive watch mode, focus mode, CI sharding, run by directory/file/line number, fail-fast, and color formatting.
 
 ---
 
@@ -48,7 +48,7 @@ bundle binstub mighty_test
 Now you can run mighty_test with `bin/mt`.
 
 > [!TIP]
-> **When installing mighty_test in a Rails project, make sure to put the gem in the `:test` Gemfile group.** Although Rails has a built-in test runner (`bin/rails test`) that already provides a lot of what mighty_test offers, you can still use `bin/mt` with Rails projects for its unique `--watch` mode and CI `--split` feature.
+> **When installing mighty_test in a Rails project, make sure to put the gem in the `:test` Gemfile group.** Although Rails has a built-in test runner (`bin/rails test`) that already provides a lot of what mighty_test offers, you can still use `bin/mt` with Rails projects for its unique `--watch` mode and CI `--shard` feature.
 
 ## Rake Integration (Non-Rails)
 
@@ -110,35 +110,47 @@ bin/mt test/commands
 
 If the `CI` environment variable is set, mighty_test defaults to running _all_ tests, including slow tests. This is equivalent to passing `--all`.
 
-mighty_test can also split test files across parallel CI jobs.
+mighty_test can also distribute test files evenly across parallel CI jobs, using the `--shard` option. The _shard_ nomenclature has been borrowed from similar features in [Jest](https://jestjs.io/docs/cli#--shard) and [Playwright](https://playwright.dev/docs/test-sharding).
 
 ```sh
 # Run the 1st group of tests out of 4 total groups
-bin/mt --split 1:4
+bin/mt --shard 1/4
 ```
 
-In GitHub Actions, for example, you can use `--split` with a matrix strategy to easily divide tests across N jobs.
+In GitHub Actions, for example, you can use `--shard` with a matrix strategy to easily divide tests across N jobs.
 
 ```yaml
 jobs:
   test:
     strategy:
       matrix:
-        split:
-          - "1:4"
-          - "2:4"
-          - "3:4"
-          - "4:4"
+        shard:
+          - "1/4"
+          - "2/4"
+          - "3/4"
+          - "4/4"
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      - run: bin/mt --split ${{ matrix.split }}
+      - run: bin/mt --shard ${{ matrix.shard }}
+```
+
+In CircleCI, you can use the `parallelism` setting, which automatically injects `$CIRCLE_NODE_INDEX` and `$CIRCLE_NODE_TOTAL` environment variables. Note that `$CIRCLE_NODE_INDEX` is zero-indexed, so it needs to be incremented by 1.
+
+```yaml
+jobs:
+  test:
+    parallelism: 4
+    steps:
+      - checkout
+      - ruby/install-deps
+      - run: SHARD="$((${CIRCLE_NODE_INDEX}+1))"; bin/mt --shard ${SHARD}/${CIRCLE_NODE_TOTAL}
 ```
 
 > [!TIP]
-> `--split` will shuffle tests and automatically distribute slow tests evenly across jobs.
+> `--shard` will shuffle tests and automatically distribute slow tests evenly across jobs.
 
 ## 🧑‍🔬 Watch Mode
 

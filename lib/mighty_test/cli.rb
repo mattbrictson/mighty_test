@@ -53,6 +53,8 @@ module MightyTest
 
     def run_tests_by_path
       test_paths = find_test_paths
+      test_paths = Sharder.from_argv(options[:shard], env:).shard(test_paths) if options[:shard]
+
       run_tests_and_exit!(*test_paths)
     end
 
