@@ -27,10 +27,13 @@ module MightyTest
     end
 
     def find_new_and_changed_paths
-      out, _err, status = Open3.capture3(*%w[git ls-files --deduplicate -m -o --exclude-standard test app lib])
+      out, _err, status = Open3.capture3(*%w[git status --porcelain=1 -uall -z --no-renames -- test app lib])
       return [] unless status.success?
 
-      out.lines(chomp: true).reject(&:empty?).uniq
+      out
+        .split("\x0")
+        .filter_map { |line| line[/^.. (.+)/, 1] }
+        .uniq
     rescue SystemCallError
       []
     end

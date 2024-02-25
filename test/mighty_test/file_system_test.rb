@@ -115,10 +115,13 @@ module MightyTest
     end
 
     def test_find_new_and_changed_paths_returns_array_based_on_git_output
-      git_output = <<~OUT
-        lib/mighty_test/file_system.rb
-        test/mighty_test/file_system_test.rb
-      OUT
+      git_output = [
+        "M  lib/mighty_test/cli.rb",
+        " M lib/mighty_test/file_system.rb",
+        "M  lib/mighty_test/sharder.rb",
+        " M test/mighty_test/file_system_test.rb",
+        "?? test/mighty_test/sharder_test.rb"
+      ].join("\x0")
 
       status = Minitest::Mock.new
       status.expect(:success?, true)
@@ -129,8 +132,11 @@ module MightyTest
 
       assert_equal(
         %w[
+          lib/mighty_test/cli.rb
           lib/mighty_test/file_system.rb
+          lib/mighty_test/sharder.rb
           test/mighty_test/file_system_test.rb
+          test/mighty_test/sharder_test.rb
         ],
         paths
       )
