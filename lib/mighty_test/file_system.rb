@@ -20,6 +20,12 @@ module MightyTest
       Dir[glob]
     end
 
+    def slow_test_path?(path)
+      return false if path.nil?
+
+      path.match?(%r{^test/(e2e|feature|features|integration|system)/})
+    end
+
     def find_new_and_changed_paths
       out, _err, status = Open3.capture3(*%w[git ls-files --deduplicate -m -o --exclude-standard test app lib])
       return [] unless status.success?

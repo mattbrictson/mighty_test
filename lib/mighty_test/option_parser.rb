@@ -2,16 +2,17 @@ require "optparse"
 
 module MightyTest
   class OptionParser
-    def initialize
+    def initialize # rubocop:disable Metrics/AbcSize
       @parser = ::OptionParser.new do |op|
         op.require_exact = true
         op.banner = <<~BANNER
-          Usage: mt
+          Usage: mt [--all]
                  mt [test file...] [test dir...]
                  mt --watch
 
         BANNER
 
+        op.on("--all") { options[:all] = true }
         op.on("--watch") { options[:watch] = true }
         op.on("--shard SHARD") { |value| options[:shard] = value }
         op.on("-h", "--help") { options[:help] = true }

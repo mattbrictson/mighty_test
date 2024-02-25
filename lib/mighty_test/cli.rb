@@ -53,9 +53,18 @@ module MightyTest
 
     def run_tests_by_path
       test_paths = find_test_paths
+      test_paths = excluding_slow_paths(test_paths) unless path_args.any? || ci? || options[:all]
       test_paths = Sharder.from_argv(options[:shard], env:).shard(test_paths) if options[:shard]
 
       run_tests_and_exit!(*test_paths)
+    end
+
+    def excluding_slow_paths(test_paths)
+      test_paths.reject { |path| file_system.slow_test_path?(path) }
+    end
+
+    def ci?
+      !env["CI"].to_s.strip.empty?
     end
 
     def find_test_paths

@@ -76,6 +76,25 @@ module MightyTest
       )
     end
 
+    def test_paths_in_certain_directories_are_considered_slow
+      %w[e2e feature features integration system].each do |dir|
+        assert FileSystem.new.slow_test_path?("test/#{dir}/some_test.rb")
+        assert FileSystem.new.slow_test_path?("test/#{dir}/nested/path/some_test.rb")
+      end
+    end
+
+    def test_paths_in_normal_test_directories_are_not_considered_slow
+      refute FileSystem.new.slow_test_path?("test/test_helper.rb")
+      refute FileSystem.new.slow_test_path?("test/models/user_test.rb")
+      refute FileSystem.new.slow_test_path?("test/fixtures/users.yml")
+    end
+
+    def test_paths_in_implementation_directories_are_not_considered_slow
+      refute FileSystem.new.slow_test_path?("Gemfile")
+      refute FileSystem.new.slow_test_path?("lib/integration/api.rb")
+      refute FileSystem.new.slow_test_path?("lib/models/user.rb")
+    end
+
     def test_find_new_and_changed_paths_returns_empty_array_if_git_exits_with_error
       status = Minitest::Mock.new
       status.expect(:success?, false)
