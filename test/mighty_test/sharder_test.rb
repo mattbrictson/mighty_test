@@ -55,7 +55,7 @@ module MightyTest
       assert_equal(%w[f e c], result)
     end
 
-    def test_it_divdes_items_into_roughly_equally_sized_shards
+    def test_it_divides_items_into_roughly_equally_sized_shards
       all = %w[a b c d e f g h i j k l m n o p q r]
       shards = (1..4).map do |index|
         Sharder.new(index:, total: 4).shard(all)
@@ -66,6 +66,46 @@ module MightyTest
       end
 
       assert_equal all, shards.flatten.sort
+    end
+
+    def test_it_evenly_distributes_slow_paths_across_shards
+      all = %w[
+        test/system/login_test.rb
+        test/system/admin_test.rb
+        test/models/post_test.rb
+        test/system/editor_test.rb
+        test/models/user_test.rb
+        test/system/email_test.rb
+        test/models/comment_test.rb
+        test/system/rss_test.rb
+        test/models/category_test.rb
+        test/system/moderation_test.rb
+      ]
+      shards = (1..3).map do |index|
+        Sharder.new(index:, total: 3).shard(all)
+      end
+
+      assert_equal(
+        [
+          %w[
+            test/models/user_test.rb
+            test/models/post_test.rb
+            test/system/login_test.rb
+            test/system/admin_test.rb
+          ],
+          %w[
+            test/models/comment_test.rb
+            test/system/rss_test.rb
+            test/system/moderation_test.rb
+          ],
+          %w[
+            test/models/category_test.rb
+            test/system/email_test.rb
+            test/system/editor_test.rb
+          ]
+        ],
+        shards
+      )
     end
   end
 end
