@@ -118,9 +118,24 @@ module MightyTest
       stdout, = run_watcher(stdin: "\rq", in: fixtures_path.join("example_project"))
 
       assert_includes(stdout, <<~EXPECTED)
-        Running all tests...
+        Running tests...
 
         [SYSTEM] mt
+      EXPECTED
+    end
+
+    def test_watcher_runs_all_tests_with_all_flag_when_a_key_is_pressed
+      system_proc do |*args|
+        puts "[SYSTEM] #{args.join(' ')}"
+        true
+      end
+
+      stdout, = run_watcher(stdin: "aq", in: fixtures_path.join("example_project"))
+
+      assert_includes(stdout, <<~EXPECTED)
+        Running tests with --all...
+
+        [SYSTEM] mt --all
       EXPECTED
     end
 
