@@ -12,7 +12,7 @@ module MightyTest
       @system_proc = system_proc
     end
 
-    def run(iterations: :indefinitely) # rubocop:disable Metrics/MethodLength
+    def run(iterations: :indefinitely) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength
       start_file_system_listener
       start_keypress_listener
       puts WATCHING_FOR_CHANGES
@@ -23,6 +23,8 @@ module MightyTest
           run_matching_test_files(paths)
         in [:keypress, "\r" | "\n"]
           run_all_tests
+        in [:keypress, "a"]
+          run_all_tests(flags: ["--all"])
         in [:keypress, "d"]
           run_matching_test_files_from_git_diff
         in [:keypress, "q"]
@@ -41,11 +43,11 @@ module MightyTest
 
     attr_reader :console, :extra_args, :file_system, :file_system_listener, :keypress_listener, :system_proc
 
-    def run_all_tests
+    def run_all_tests(flags: [])
       console.clear
-      puts "Running all tests..."
+      puts flags.any? ? "Running tests with #{flags.join(' ')}..." : "Running tests..."
       puts
-      mt
+      mt(flags:)
     end
 
     def run_matching_test_files(paths)
@@ -67,8 +69,8 @@ module MightyTest
       puts WATCHING_FOR_CHANGES
     end
 
-    def mt(*test_paths)
-      command = ["mt", *extra_args]
+    def mt(*test_paths, flags: [])
+      command = ["mt", *extra_args, *flags]
       command.append("--", *test_paths.flatten) if test_paths.any?
 
       success = system_proc.call(*command)
