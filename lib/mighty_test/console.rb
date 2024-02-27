@@ -16,7 +16,7 @@ module MightyTest
     end
 
     def wait_for_keypress
-      return stdin.getc unless stdin.respond_to?(:raw)
+      return stdin.getc unless stdin.respond_to?(:raw) && tty?
 
       stdin.raw(intr: true) { stdin.getc }
     end

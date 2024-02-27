@@ -57,9 +57,9 @@ module MightyTest
       refute_match(/FailingTest/, result.stdout)
     end
 
-    def test_mt_runs_watch_mode_that_executes_tests_when_files_change
+    def test_mt_runs_watch_mode_that_executes_tests_when_files_change # rubocop:disable Minitest/MultipleAssertions
       project_dir = fixtures_path.join("example_project")
-      stdout, = capture_subprocess_io do
+      stdout, stderr = capture_subprocess_io do
         # Start mt --watch in the background
         pid = spawn(*%w[bundle exec mt --watch --verbose], chdir: project_dir)
 
@@ -75,6 +75,7 @@ module MightyTest
       end
 
       assert_includes(stdout, "Watching for changes to source and test files.")
+      assert_empty(stderr)
       assert_match(/ExampleTest/, stdout)
       assert_match(/\d runs, \d assertions, 0 failures, 0 errors/, stdout)
     end

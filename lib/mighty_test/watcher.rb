@@ -98,11 +98,12 @@ module MightyTest
       @keypress_listener = Thread.new do
         loop do
           key = console.wait_for_keypress
-          post_event(:keypress, key) if key
-        rescue Interrupt
-          retry
+          break if key.nil?
+
+          post_event(:keypress, key)
         end
       end
+      @keypress_listener.abort_on_exception = true
     end
 
     def loop_for(iterations, &)
