@@ -1,11 +1,9 @@
-require "concurrent"
-
 module MightyTest
   class Watcher
     WATCHING_FOR_CHANGES = 'Watching for changes to source and test files. Press "q" to quit.'.freeze
 
     def initialize(console: Console.new, extra_args: [], file_system: FileSystem.new, system_proc: method(:system))
-      @event = Concurrent::MVar.new
+      @queue = Thread::Queue.new
       @console = console
       @extra_args = extra_args
       @file_system = file_system
@@ -111,11 +109,11 @@ module MightyTest
 
     def await_next_event
       file_system_listener.start if file_system_listener.paused?
-      @event.take
+      @queue.pop
     end
 
     def post_event(*event)
-      @event.put(event)
+      @queue << event
     end
   end
 end
