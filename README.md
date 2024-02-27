@@ -169,10 +169,10 @@ Watch mode also offers a menu of interactive commands:
 
 ```
 > Press Enter to run all tests.
-> Press a to run all tests, including slow tests.
-> Press d to run tests for files diffed or added since the last git commit.
-> Press h to show this help menu.
-> Press q to quit.
+> Press "a" to run all tests, including slow tests.
+> Press "d" to run tests for files diffed or added since the last git commit.
+> Press "h" to show this help menu.
+> Press "q" to quit.
 ```
 
 ## 🔬 Focus Mode

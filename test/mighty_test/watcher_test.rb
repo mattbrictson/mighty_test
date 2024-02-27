@@ -68,7 +68,7 @@ module MightyTest
         [SYSTEM] mt -- test/example_test.rb
         [SOUND] :pass
 
-        Watching for changes to source and test files. Press "q" to quit.
+        Watching for changes to source and test files. Press "h" for help or "q" to quit.
       EXPECTED
     end
 
@@ -87,7 +87,7 @@ module MightyTest
         [SYSTEM] mt -- test/example_test.rb
         [SOUND] :fail
 
-        Watching for changes to source and test files. Press "q" to quit.
+        Watching for changes to source and test files. Press "h" for help or "q" to quit.
       EXPECTED
     end
 
@@ -172,7 +172,19 @@ module MightyTest
       assert_includes(stdout, <<~EXPECTED)
         [CLEAR]
         No affected test files detected since the last git commit.
-        Watching for changes to source and test files. Press "q" to quit.
+        Watching for changes to source and test files. Press "h" for help or "q" to quit.
+      EXPECTED
+    end
+
+    def test_watcher_shows_help_menu_when_h_key_is_pressed
+      stdout, = run_watcher(stdin: "hq", in: fixtures_path.join("example_project"))
+
+      assert_includes(stdout, <<~EXPECTED)
+        > Press Enter to run all tests.
+        > Press "a" to run all tests, including slow tests.
+        > Press "d" to run tests for files diffed or added since the last git commit.
+        > Press "h" to show this help menu.
+        > Press "q" to quit.
       EXPECTED
     end
 
