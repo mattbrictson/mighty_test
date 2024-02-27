@@ -1,6 +1,6 @@
 module MightyTest
-  class Watcher
-    WATCHING_FOR_CHANGES = 'Watching for changes to source and test files. Press "q" to quit.'.freeze
+  class Watcher # rubocop:disable Metrics/ClassLength
+    WATCHING_FOR_CHANGES = 'Watching for changes to source and test files. Press "h" for help or "q" to quit.'.freeze
 
     def initialize(console: Console.new, extra_args: [], file_system: FileSystem.new, system_proc: method(:system))
       @queue = Thread::Queue.new
@@ -10,7 +10,7 @@ module MightyTest
       @system_proc = system_proc
     end
 
-    def run(iterations: :indefinitely) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength
+    def run(iterations: :indefinitely) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       start_file_system_listener
       start_keypress_listener
       puts WATCHING_FOR_CHANGES
@@ -25,6 +25,8 @@ module MightyTest
           run_all_tests(flags: ["--all"])
         in [:keypress, "d"]
           run_matching_test_files_from_git_diff
+        in [:keypress, "h"]
+          show_help
         in [:keypress, "q"]
           break
         else
@@ -40,6 +42,24 @@ module MightyTest
     private
 
     attr_reader :console, :extra_args, :file_system, :file_system_listener, :keypress_listener, :system_proc
+
+    def show_help
+      console.clear
+      puts <<~MENU
+        `mt --watch` is watching file system activity and will automatically run
+        test files when they are added or modified. If you modify a source file,
+        mt will find and run the corresponding tests.
+
+        You can also trigger test runs with the following interactive commands.
+
+        > Press Enter to run all tests.
+        > Press "a" to run all tests, including slow tests.
+        > Press "d" to run tests for files diffed or added since the last git commit.
+        > Press "h" to show this help menu.
+        > Press "q" to quit.
+
+      MENU
+    end
 
     def run_all_tests(flags: [])
       console.clear
