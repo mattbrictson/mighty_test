@@ -17,12 +17,12 @@ mighty_test (`mt`) is a TDD-friendly Minitest runner for Ruby projects. It inclu
 
 **Features**
 
-- [⚙️ CI Mode](#%EF%B8%8F-ci-mode)
-- [🧑‍🔬 Watch Mode](#-watch-mode)
-- [🔬 Focus Mode](#-focus-mode)
-- [🛑 Fail Fast](#-fail-fast)
-- [🚥 Color Output](#-color-output)
-- [💬 More Options](#-more-options)
+- ⚙️ [CI Mode](#%EF%B8%8F-ci-mode)
+- 🧑‍🔬 [Watch Mode](#-watch-mode)
+- 🔬 [Focus Mode](#-focus-mode)
+- 🛑 [Fail Fast](#-fail-fast)
+- 🚥 [Color Output](#-color-output)
+- 💬 [More Options](#-more-options)
 
 **Community**
 
