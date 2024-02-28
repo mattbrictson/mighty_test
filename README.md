@@ -50,26 +50,6 @@ Now you can run mighty_test with `bin/mt`.
 > [!TIP]
 > **When installing mighty_test in a Rails project, make sure to put the gem in the `:test` Gemfile group.** Although Rails has a built-in test runner (`bin/rails test`) that already provides a lot of what mighty_test offers, you can still use `bin/mt` with Rails projects for its unique `--watch` mode and CI `--shard` feature.
 
-## Rake Integration (Non-Rails)
-
-For non-Rails projects, `rake test` is the popular convention for running tests. To provide an easy migration path to `mt`, you can make the following change to your Rakefile.
-
-First, remove any existing `Rake::TestTask` from your Rakefile. Then add the following snippet:
-
-```ruby
-require "shellwords"
-
-desc "Run all tests, excluding slow tests"
-task :test do
-  sh "bin/mt", *Shellwords.split(ENV["TESTOPTS"] || ""), "--", *Array(ENV["TEST"]),
-end
-
-desc "Run all tests, slow tests included"
-task :"test:all" do
-  sh "bin/mt", "--all", *Shellwords.split(ENV["TESTOPTS"] || "")
-end
-```
-
 ## Requirements
 
 mighty_test requires modern versions of Minitest and Ruby.
@@ -251,16 +231,6 @@ bin/mt --verbose
 
 # Show the full list of possible options
 bin/mt --help
-```
-
-When using the Rake integration, Rake-style test environment variables still work. These are equivalent:
-
-```sh
-# Rake style
-rake test TEST=test/commands/init_test.rb TESTOPTS=--verbose
-
-# CLI style
-bin/mt --verbose test/commands/init_test.rb
 ```
 
 ## Support
