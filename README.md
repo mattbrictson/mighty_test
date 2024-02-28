@@ -233,6 +233,13 @@ bin/mt --verbose
 bin/mt --help
 ```
 
+If you have Minitest extensions installed, like [minitest-snapshots](https://github.com/mattbrictson/minitest-snapshots), the command line options of those extensions are supported as well.
+
+```sh
+# Update snapshots
+bin/mt -u
+```
+
 ## Support
 
 If you want to report a bug, or have ideas, feedback or questions about the gem, [let me know via GitHub issues](https://github.com/mattbrictson/mighty_test/issues/new) and I will do my best to provide a helpful answer. Happy hacking!
