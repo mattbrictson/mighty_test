@@ -211,7 +211,7 @@ bin/mt
 bin/mt --no-rg
 ```
 
-(image goes here)
+<img alt="Screenshot of bin/mt output" width="618" src="https://raw.githubusercontent.com/mattbrictson/mighty_test/main/screenshot.png">
 
 This functionality is provided by the [minitest-rg](https://github.com/minitest/minitest-rg) plugin, which is included with mighty_test.
 
