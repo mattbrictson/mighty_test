@@ -1,47 +1,58 @@
 module MightyTest
-  class Watcher # rubocop:disable Metrics/ClassLength
+  class Watcher
+    class ListenerTriggered < StandardError
+      attr_reader :paths
+
+      def initialize(paths)
+        @paths = paths
+        super()
+      end
+    end
+
     WATCHING_FOR_CHANGES = 'Watching for changes to source and test files. Press "h" for help or "q" to quit.'.freeze
 
     def initialize(console: Console.new, extra_args: [], file_system: FileSystem.new, system_proc: method(:system))
-      @queue = Thread::Queue.new
       @console = console
       @extra_args = extra_args
       @file_system = file_system
       @system_proc = system_proc
     end
 
-    def run(iterations: :indefinitely) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      start_file_system_listener
-      start_keypress_listener
-      puts WATCHING_FOR_CHANGES
+    def run(iterations: :indefinitely) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
+      started = false
+      @foreground_thread = Thread.current
 
       loop_for(iterations) do
-        case await_next_event
-        in [:file_system_changed, [_, *] => paths]
-          run_matching_test_files(paths)
-        in [:keypress, "\r" | "\n"]
+        start_file_system_listener && puts(WATCHING_FOR_CHANGES) unless started
+        started = true
+
+        case console.wait_for_keypress
+        when "\r", "\n"
           run_all_tests
-        in [:keypress, "a"]
+        when "a"
           run_all_tests(flags: ["--all"])
-        in [:keypress, "d"]
+        when "d"
           run_matching_test_files_from_git_diff
-        in [:keypress, "h"]
+        when "h"
           show_help
-        in [:keypress, "q"]
+        when "q"
+          file_system_listener.stop
           break
-        else
-          nil
         end
+      rescue ListenerTriggered => e
+        run_matching_test_files(e.paths)
+        file_system_listener.start if file_system_listener.paused?
+      rescue Interrupt
+        file_system_listener&.stop
+        raise
       end
     ensure
       puts "\nExiting."
-      file_system_listener&.stop
-      keypress_listener&.kill
     end
 
     private
 
-    attr_reader :console, :extra_args, :file_system, :file_system_listener, :keypress_listener, :system_proc
+    attr_reader :console, :extra_args, :file_system, :file_system_listener, :system_proc, :foreground_thread
 
     def show_help
       console.clear
@@ -105,36 +116,18 @@ module MightyTest
       file_system_listener.stop if file_system_listener && !file_system_listener.stopped?
 
       @file_system_listener = file_system.listen do |modified, added, _removed|
+        paths = [*modified, *added].uniq
+        next if paths.empty?
+
         # Pause listener so that subsequent changes are queued up while we are running the tests
         file_system_listener.pause unless file_system_listener.stopped?
-        post_event(:file_system_changed, [*modified, *added].uniq)
+        foreground_thread.raise ListenerTriggered.new(paths)
       end
     end
     alias restart_file_system_listener start_file_system_listener
 
-    def start_keypress_listener
-      @keypress_listener = Thread.new do
-        loop do
-          key = console.wait_for_keypress
-          break if key.nil?
-
-          post_event(:keypress, key)
-        end
-      end
-      @keypress_listener.abort_on_exception = true
-    end
-
     def loop_for(iterations, &)
       iterations == :indefinitely ? loop(&) : iterations.times(&)
-    end
-
-    def await_next_event
-      file_system_listener.start if file_system_listener.paused?
-      @queue.pop
-    end
-
-    def post_event(*event)
-      @queue << event
     end
   end
 end
