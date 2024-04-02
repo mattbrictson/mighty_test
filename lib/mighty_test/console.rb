@@ -16,9 +16,10 @@ module MightyTest
     end
 
     def wait_for_keypress
-      return stdin.getc unless stdin.respond_to?(:raw) && tty?
-
-      stdin.raw(intr: true) { stdin.getc }
+      with_raw_input do
+        sleep if stdin.eof?
+        stdin.getc
+      end
     end
 
     def play_sound(name, wait: false)
@@ -53,6 +54,12 @@ module MightyTest
 
     def tty?
       $stdout.respond_to?(:tty?) && $stdout.tty?
+    end
+
+    def with_raw_input(&)
+      return yield unless stdin.respond_to?(:raw) && tty?
+
+      stdin.raw(intr: true, &)
     end
   end
 end
