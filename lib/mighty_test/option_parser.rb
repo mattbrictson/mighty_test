@@ -25,6 +25,7 @@ module MightyTest
       options[:all] = true if argv.delete("--all")
       options[:watch] = true if argv.delete("--watch")
       options[:version] = true if argv.delete("--version")
+      options[:warnings] = true if argv.delete("-w")
       options[:help] = true if argv.delete("--help") || argv.delete("-h")
       parse_shard(argv, options)
       options
