@@ -153,6 +153,33 @@ module MightyTest
       assert_equal all.length, shards.sum(&:length)
     end
 
+    def test_w_flag_enables_ruby_warnings
+      orig_verbose = $VERBOSE
+      $VERBOSE = false
+
+      with_fake_minitest_runner do |runner, executed_tests|
+        cli_run(argv: %w[-w app/models/user.rb], chdir: fixtures_path.join("rails_project"), runner:)
+
+        assert_equal(%w[app/models/user.rb], executed_tests)
+        assert($VERBOSE)
+      end
+    ensure
+      $VERBOSE = orig_verbose
+    end
+
+    def test_w_flag_is_passed_through_to_watcher
+      new_mock_watcher = lambda do |extra_args:|
+        assert_equal(["-w"], extra_args)
+
+        mock = Minitest::Mock.new
+        mock.expect(:run, nil)
+      end
+
+      MightyTest::Watcher.stub(:new, new_mock_watcher) do
+        cli_run(argv: %w[-w --watch])
+      end
+    end
+
     private
 
     def with_fake_minitest_runner
