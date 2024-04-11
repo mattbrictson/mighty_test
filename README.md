@@ -217,6 +217,12 @@ This functionality is provided by the [minitest-rg](https://github.com/minitest/
 
 ## 💬 More Options
 
+Use `-w` to enable Ruby warnings when running tests:
+
+```sh
+bin/mt -w
+```
+
 Minitest options are passed through to Minitest.
 
 ```sh
