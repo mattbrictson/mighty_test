@@ -4,10 +4,10 @@ module MightyTest
   class OptionParser
     def parse(argv)
       argv, literal_args = split(argv, "--")
-      options = parse_options!(argv)
-      minitest_flags = parse_minitest_flags!(argv) unless options[:help]
+      options, extra_args = parse_options!(argv)
+      extra_args += parse_minitest_flags!(argv) unless options[:help]
 
-      [argv + literal_args, minitest_flags || [], options]
+      [argv + literal_args, extra_args, options]
     end
 
     def to_s
@@ -22,13 +22,15 @@ module MightyTest
 
     def parse_options!(argv)
       options = {}
+      extra_args = []
       options[:all] = true if argv.delete("--all")
       options[:watch] = true if argv.delete("--watch")
       options[:version] = true if argv.delete("--version")
-      options[:warnings] = true if argv.delete("-w")
       options[:help] = true if argv.delete("--help") || argv.delete("-h")
       parse_shard(argv, options)
-      options
+      extra_args << "-w" if argv.delete("-w")
+
+      [options, extra_args]
     end
 
     def parse_minitest_flags!(argv)

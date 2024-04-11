@@ -37,9 +37,7 @@ module MightyTest
     end
 
     def watch
-      watch_args = extra_args
-      watch_args += ["-w"] if options[:warnings]
-      Watcher.new(extra_args: watch_args).run
+      Watcher.new(extra_args:).run
     end
 
     def run_test_by_line_number
@@ -84,7 +82,8 @@ module MightyTest
     end
 
     def run_tests_and_exit!(*test_paths, flags: [])
-      runner.run_inline_and_exit!(*test_paths, args: extra_args + flags, warnings: options[:warnings])
+      $VERBOSE = true if extra_args.delete("-w")
+      runner.run_inline_and_exit!(*test_paths, args: extra_args + flags)
     end
 
     def handle_exception(e) # rubocop:disable Naming/MethodParameterName

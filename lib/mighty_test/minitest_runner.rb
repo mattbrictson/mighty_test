@@ -6,8 +6,7 @@ module MightyTest
       exit
     end
 
-    def run_inline_and_exit!(*test_files, args: [], warnings: false)
-      $VERBOSE = warnings
+    def run_inline_and_exit!(*test_files, args: [])
       $LOAD_PATH.unshift "test"
       ARGV.replace(Array(args))
 
