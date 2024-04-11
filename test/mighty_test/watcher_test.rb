@@ -32,9 +32,9 @@ module MightyTest
         callback.call(["test/example_test.rb"], [], [])
       end
 
-      stdout, = run_watcher(iterations: 1, extra_args: ["--fail-fast"], in: fixtures_path.join("example_project"))
+      stdout, = run_watcher(iterations: 1, extra_args: %w[-w --fail-fast], in: fixtures_path.join("example_project"))
 
-      assert_includes(stdout, "[SYSTEM] mt --fail-fast -- test/example_test.rb\n")
+      assert_includes(stdout, "[SYSTEM] mt -w --fail-fast -- test/example_test.rb\n")
     end
 
     def test_watcher_clears_the_screen_and_prints_the_test_file_being_run_prior_to_executing_the_mt_command

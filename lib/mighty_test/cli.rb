@@ -82,6 +82,7 @@ module MightyTest
     end
 
     def run_tests_and_exit!(*test_paths, flags: [])
+      $VERBOSE = true if extra_args.delete("-w")
       runner.run_inline_and_exit!(*test_paths, args: extra_args + flags)
     end
 
