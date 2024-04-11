@@ -2,9 +2,9 @@ require "test_helper"
 
 module MightyTest
   class OptionParserTest < Minitest::Test
-    def test_parses_known_flags_into_options
-      argv = %w[-h --version]
-      _path_args, _extra_args, options = OptionParser.new.parse(argv)
+    def test_parses_known_flags_into_options_and_extra_args
+      argv = %w[-h -w --version]
+      _path_args, extra_args, options = OptionParser.new.parse(argv)
 
       assert_equal(
         {
@@ -13,6 +13,7 @@ module MightyTest
         },
         options
       )
+      assert_equal(["-w"], extra_args)
     end
 
     def test_doesnt_return_seed_args_if_they_werent_specified
@@ -57,11 +58,11 @@ module MightyTest
     end
 
     def test_handles_mix_of_mt_and_minitest_flags_and_args
-      argv = %w[path1 --seed 1234 path2 --shard 1/2 path3 -f --all -- path4 --great]
+      argv = %w[path1 --seed 1234 -w path2 --shard 1/2 path3 -f --all -- path4 --great]
       path_args, extra_args, options = OptionParser.new.parse(argv)
 
       assert_equal(%w[path1 path2 path3 path4 --great], path_args)
-      assert_equal(%w[--seed 1234 -f], extra_args)
+      assert_equal(%w[-w --seed 1234 -f], extra_args)
       assert_equal({ all: true, shard: "1/2" }, options)
     end
 
