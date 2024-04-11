@@ -10,6 +10,7 @@ module MightyTest
       $LOAD_PATH.unshift "test"
       ARGV.replace(Array(args))
 
+      require "minitest"
       require "minitest/focus"
       require "minitest/rg"
 
