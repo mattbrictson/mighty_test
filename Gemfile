@@ -2,7 +2,7 @@ source "https://rubygems.org"
 gemspec
 
 gem "rake", "~> 13.0"
-gem "rubocop", "1.63.4"
+gem "rubocop", "1.64.1"
 gem "rubocop-minitest", "0.35.0"
 gem "rubocop-packaging", "0.5.2"
 gem "rubocop-performance", "1.21.0"
