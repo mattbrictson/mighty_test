@@ -109,7 +109,8 @@ module MightyTest
       $stdout.flush
     rescue Interrupt
       # Pressing ctrl-c kills the fs_event background process, so we have to manually restart it.
-      restart_file_system_listener
+      # Do this in a separate thread to work around odd behavior on Ruby 3.4.
+      Thread.new { restart_file_system_listener }
     end
 
     def start_file_system_listener
