@@ -51,11 +51,27 @@ module MightyTest
       attr_reader :console, :file_system, :file_system_listener, :file_system_queue
 
       def pop_files_changed
-        paths = file_system_queue.pop(timeout: 0.2)
+        paths = try_file_system_pop(timeout: 0.2)
         return if paths.nil?
 
         paths += file_system_queue.pop until file_system_queue.empty?
         paths.uniq
+      end
+
+      if RUBY_VERSION.start_with?("3.1.")
+        # TODO: Remove once we drop support for Ruby 3.1
+        require "timeout"
+        def try_file_system_pop(timeout:)
+          Timeout.timeout(timeout) do
+            file_system_queue.pop
+          end
+        rescue Timeout::Error
+          nil
+        end
+      else
+        def try_file_system_pop(timeout:)
+          file_system_queue.pop(timeout:)
+        end
       end
     end
   end
