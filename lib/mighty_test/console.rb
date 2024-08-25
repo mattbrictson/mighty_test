@@ -1,4 +1,5 @@
 require "io/console"
+require "io/wait"
 
 module MightyTest
   class Console
