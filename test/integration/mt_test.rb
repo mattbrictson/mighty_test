@@ -74,8 +74,9 @@ module MightyTest
         Process.kill(:TERM, pid)
       end
 
-      # Ignore warning printed to stderr for a known issue with the listen gem
-      stderr.sub!(/^.*\blisten\.rb.*Add logger to your Gemfile or gemspec\.\n/, "")
+      # Ignore warnings printed to stderr for a known issue with the listen gem
+      stderr.sub!(/^.*logger was loaded from the standard library.*\n/i, "")
+      stderr.sub!(/^.*add logger to your Gemfile or gemspec.*\n/i, "")
       assert_empty(stderr)
 
       assert_includes(stdout, "Watching for changes to source and test files.")
