@@ -4,46 +4,47 @@ module MightyTest
   class WatcherTest < Minitest::Test
     include FixturesPath
 
+    def setup
+      @event_queue = FakeEventQueue.new
+      @system_proc = nil
+    end
+
     def test_watcher_passes_unique_set_of_test_files_to_mt_command_based_on_changes_detected
       system_proc { |*args| puts "[SYSTEM] #{args.join(' ')}" }
-      listen_thread do |callback|
-        callback.call(["lib/example.rb", "test/focused_test.rb"], ["test/focused_test.rb"], [])
-      end
+      event_queue.push :file_system_changed, %w[lib/example.rb test/focused_test.rb test/focused_test.rb]
+      event_queue.push :keypress, "q"
 
-      stdout, = run_watcher(iterations: 1, in: fixtures_path.join("example_project"))
+      stdout, = run_watcher(in: fixtures_path.join("example_project"))
 
       assert_includes(stdout, "[SYSTEM] mt -- test/example_test.rb test/focused_test.rb\n")
     end
 
     def test_watcher_does_nothing_if_a_detected_change_has_no_corresponding_test_file
       system_proc { |*args| puts "[SYSTEM] #{args.join(' ')}" }
-      listen_thread do |callback|
-        callback.call(["lib/example/version.rb"], [], [])
-      end
+      event_queue.push :file_system_changed, %w[lib/example/version.rb]
+      event_queue.push :keypress, "q"
 
-      stdout, = run_watcher(iterations: 1, in: fixtures_path.join("example_project"))
+      stdout, = run_watcher(in: fixtures_path.join("example_project"))
 
       refute_includes(stdout, "[SYSTEM]")
     end
 
     def test_watcher_passes_extra_args_through_to_mt_command
       system_proc { |*args| puts "[SYSTEM] #{args.join(' ')}" }
-      listen_thread do |callback|
-        callback.call(["test/example_test.rb"], [], [])
-      end
+      event_queue.push :file_system_changed, %w[test/example_test.rb]
+      event_queue.push :keypress, "q"
 
-      stdout, = run_watcher(iterations: 1, extra_args: %w[-w --fail-fast], in: fixtures_path.join("example_project"))
+      stdout, = run_watcher(extra_args: %w[-w --fail-fast], in: fixtures_path.join("example_project"))
 
       assert_includes(stdout, "[SYSTEM] mt -w --fail-fast -- test/example_test.rb\n")
     end
 
     def test_watcher_clears_the_screen_and_prints_the_test_file_being_run_prior_to_executing_the_mt_command
       system_proc { |*args| puts "[SYSTEM] #{args.join(' ')}" }
-      listen_thread do |callback|
-        callback.call(["test/example_test.rb"], [], [])
-      end
+      event_queue.push :file_system_changed, %w[test/example_test.rb]
+      event_queue.push :keypress, "q"
 
-      stdout, = run_watcher(iterations: 1, in: fixtures_path.join("example_project"))
+      stdout, = run_watcher(in: fixtures_path.join("example_project"))
 
       assert_includes(stdout, <<~EXPECTED)
         [CLEAR]
@@ -58,11 +59,10 @@ module MightyTest
         puts "[SYSTEM] #{args.join(' ')}"
         true
       end
-      listen_thread do |callback|
-        callback.call(["test/example_test.rb"], [], [])
-      end
+      event_queue.push :file_system_changed, %w[test/example_test.rb]
+      event_queue.push :keypress, "q"
 
-      stdout, = run_watcher(iterations: 1, in: fixtures_path.join("example_project"))
+      stdout, = run_watcher(in: fixtures_path.join("example_project"))
 
       assert_includes(stdout, <<~EXPECTED)
         [SYSTEM] mt -- test/example_test.rb
@@ -77,11 +77,10 @@ module MightyTest
         puts "[SYSTEM] #{args.join(' ')}"
         false
       end
-      listen_thread do |callback|
-        callback.call(["test/example_test.rb"], [], [])
-      end
+      event_queue.push :file_system_changed, %w[test/example_test.rb]
+      event_queue.push :keypress, "q"
 
-      stdout, = run_watcher(iterations: 1, in: fixtures_path.join("example_project"))
+      stdout, = run_watcher(in: fixtures_path.join("example_project"))
 
       assert_includes(stdout, <<~EXPECTED)
         [SYSTEM] mt -- test/example_test.rb
@@ -92,19 +91,20 @@ module MightyTest
     end
 
     def test_watcher_restarts_the_listener_when_a_test_run_is_interrupted
-      thread_count = 0
+      restarted = false
       system_proc { |*| raise Interrupt }
-      listen_thread do |callback|
-        thread_count += 1
-        callback.call(["test/example_test.rb"], [], []) unless thread_count > 2
-      end
 
-      run_watcher(iterations: 2, in: fixtures_path.join("example_project"))
-      assert_equal(2, thread_count)
+      event_queue.push :file_system_changed, %w[test/example_test.rb]
+      event_queue.push :keypress, "q"
+      event_queue.define_singleton_method(:restart) { restarted = true }
+
+      run_watcher(in: fixtures_path.join("example_project"))
+      assert restarted
     end
 
     def test_watcher_exits_when_q_key_is_pressed
-      stdout, = run_watcher(stdin: "q", in: fixtures_path.join("example_project"))
+      event_queue.push :keypress, "q"
+      stdout, = run_watcher(in: fixtures_path.join("example_project"))
 
       assert_includes(stdout, "Exiting.")
     end
@@ -114,8 +114,10 @@ module MightyTest
         puts "[SYSTEM] #{args.join(' ')}"
         true
       end
+      event_queue.push :keypress, "\r"
+      event_queue.push :keypress, "q"
 
-      stdout, = run_watcher(stdin: "\rq", in: fixtures_path.join("example_project"))
+      stdout, = run_watcher(in: fixtures_path.join("example_project"))
 
       assert_includes(stdout, <<~EXPECTED)
         Running tests...
@@ -129,8 +131,10 @@ module MightyTest
         puts "[SYSTEM] #{args.join(' ')}"
         true
       end
+      event_queue.push :keypress, "a"
+      event_queue.push :keypress, "q"
 
-      stdout, = run_watcher(stdin: "aq", in: fixtures_path.join("example_project"))
+      stdout, = run_watcher(in: fixtures_path.join("example_project"))
 
       assert_includes(stdout, <<~EXPECTED)
         Running tests with --all...
@@ -144,10 +148,12 @@ module MightyTest
         puts "[SYSTEM] #{args.join(' ')}"
         true
       end
+      event_queue.push :keypress, "d"
+      event_queue.push :keypress, "q"
 
       file_system = FileSystem.new
       stdout, = file_system.stub(:find_new_and_changed_paths, %w[lib/example.rb]) do
-        run_watcher(file_system:, stdin: "dq", in: fixtures_path.join("example_project"))
+        run_watcher(file_system:, in: fixtures_path.join("example_project"))
       end
 
       assert_includes(stdout, <<~EXPECTED)
@@ -163,10 +169,12 @@ module MightyTest
         puts "[SYSTEM] #{args.join(' ')}"
         true
       end
+      event_queue.push :keypress, "d"
+      event_queue.push :keypress, "q"
 
       file_system = FileSystem.new
       stdout, = file_system.stub(:find_new_and_changed_paths, []) do
-        run_watcher(file_system:, stdin: "dq", in: fixtures_path.join("example_project"))
+        run_watcher(file_system:, in: fixtures_path.join("example_project"))
       end
 
       assert_includes(stdout, <<~EXPECTED)
@@ -177,7 +185,10 @@ module MightyTest
     end
 
     def test_watcher_shows_help_menu_when_h_key_is_pressed
-      stdout, = run_watcher(stdin: "hq", in: fixtures_path.join("example_project"))
+      event_queue.push :keypress, "h"
+      event_queue.push :keypress, "q"
+
+      stdout, = run_watcher(in: fixtures_path.join("example_project"))
 
       assert_includes(stdout, <<~EXPECTED)
         > Press Enter to run all tests.
@@ -190,48 +201,36 @@ module MightyTest
 
     private
 
-    class Listener
-      def initialize(thread, callback)
-        Thread.new do
-          thread&.call(callback)
-        end
+    attr_reader :event_queue
+
+    class FakeEventQueue
+      def initialize
+        @events = []
       end
 
-      def start
+      def push(type, payload)
+        @events.unshift([type, payload])
       end
 
-      def stop
+      def pop
+        @events.pop
       end
 
-      def pause
-      end
-
-      def stopped?
-        false
-      end
-
-      def paused?
-        false
-      end
+      def start; end
+      def stop; end
     end
 
-    def run_watcher(iterations: :indefinitely, in: ".", extra_args: [], stdin: nil, file_system: FileSystem.new)
-      listen_thread = @listen_thread
-      console = Console.new(stdin: stdin.nil? ? StringIO.new : StringIO.new(stdin))
+    def run_watcher(in: ".", file_system: FileSystem.new, extra_args: [])
+      console = Console.new
       console.define_singleton_method(:clear) { puts "[CLEAR]" }
       console.define_singleton_method(:play_sound) { |sound| puts "[SOUND] #{sound.inspect}" }
-      file_system.define_singleton_method(:listen) { |&callback| Listener.new(listen_thread, callback) }
 
       capture_io do
         Dir.chdir(binding.local_variable_get(:in)) do
-          @watcher = Watcher.new(console:, extra_args:, file_system:, system_proc: @system_proc)
-          @watcher.run(iterations:)
+          @watcher = Watcher.new(console:, extra_args:, event_queue:, file_system:, system_proc: @system_proc)
+          @watcher.run
         end
       end
-    end
-
-    def listen_thread(&thread)
-      @listen_thread = thread
     end
 
     def system_proc(&proc)

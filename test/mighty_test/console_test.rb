@@ -20,10 +20,20 @@ module MightyTest
       assert_equal "clear!", stdout
     end
 
-    def test_wait_for_keypress_returns_the_next_character_on_stdin
-      console = Console.new(stdin: StringIO.new("hi"))
+    def test_read_keypress_nonblock_returns_the_next_character_on_stdin
+      stdin = StringIO.new("hi")
+      stdin.define_singleton_method(:wait_readable) { |_timeout| true }
+      console = Console.new(stdin:)
 
-      assert_equal "h", console.wait_for_keypress
+      assert_equal "h", console.read_keypress_nonblock
+    end
+
+    def test_read_keypress_nonblock_returns_nil_if_nothing_is_in_buffer
+      stdin = StringIO.new
+      stdin.define_singleton_method(:wait_readable) { |_timeout| false }
+      console = Console.new(stdin:)
+
+      assert_nil console.read_keypress_nonblock
     end
 
     def test_play_sound_returns_false_if_not_tty
