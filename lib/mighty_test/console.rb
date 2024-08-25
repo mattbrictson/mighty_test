@@ -1,4 +1,5 @@
 require "io/console"
+require "io/wait"
 
 module MightyTest
   class Console
@@ -15,11 +16,14 @@ module MightyTest
       true
     end
 
-    def wait_for_keypress
-      with_raw_input do
-        sleep if stdin.eof?
-        stdin.getc
-      end
+    def with_raw_input(&)
+      return yield unless stdin.respond_to?(:raw) && tty?
+
+      stdin.raw(intr: true, &)
+    end
+
+    def read_keypress_nonblock
+      stdin.getc if stdin.wait_readable(0)
     end
 
     def play_sound(name, wait: false)
@@ -54,12 +58,6 @@ module MightyTest
 
     def tty?
       $stdout.respond_to?(:tty?) && $stdout.tty?
-    end
-
-    def with_raw_input(&)
-      return yield unless stdin.respond_to?(:raw) && tty?
-
-      stdin.raw(intr: true, &)
     end
   end
 end
