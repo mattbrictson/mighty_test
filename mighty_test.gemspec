@@ -27,6 +27,7 @@ Gem::Specification.new do |spec|
 
   # Runtime dependencies
   spec.add_dependency "listen", "~> 3.5"
+  spec.add_dependency "logger"
   spec.add_dependency "minitest", "~> 5.15"
   spec.add_dependency "minitest-fail-fast", "~> 0.1.0"
   spec.add_dependency "minitest-focus", "~> 1.4"
