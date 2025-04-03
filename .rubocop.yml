@@ -1,8 +1,8 @@
 plugins:
   - rubocop-minitest
+  - rubocop-performance
 require:
   - rubocop-packaging
-  - rubocop-performance
   - rubocop-rake
 
 AllCops:
