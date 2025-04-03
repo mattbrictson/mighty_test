@@ -1,6 +1,6 @@
 CLIResult = Struct.new(:stdout, :stderr, :exitstatus) do
   def success?
-    exitstatus == 0 || exitstatus == true
+    [0, true].include?(exitstatus)
   end
 
   def failure?
