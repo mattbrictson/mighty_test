@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.summary = "A modern Minitest runner for TDD, with watch mode and more"
   spec.homepage = "https://github.com/mattbrictson/mighty_test"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.1"
+  spec.required_ruby_version = ">= 3.2"
 
   spec.metadata = {
     "bug_tracker_uri" => "https://github.com/mattbrictson/mighty_test/issues",
