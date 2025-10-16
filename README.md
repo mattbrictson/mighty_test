@@ -3,7 +3,6 @@
 [![Gem Version](https://img.shields.io/gem/v/mighty_test)](https://rubygems.org/gems/mighty_test)
 [![Gem Downloads](https://img.shields.io/gem/dt/mighty_test)](https://www.ruby-toolbox.com/projects/mighty_test)
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/mattbrictson/mighty_test/ci.yml)](https://github.com/mattbrictson/mighty_test/actions/workflows/ci.yml)
-[![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/mattbrictson/mighty_test)](https://codeclimate.com/github/mattbrictson/mighty_test)
 
 mighty_test (`mt`) is a TDD-friendly Minitest runner for Ruby projects. It includes a Jest-inspired interactive watch mode, focus mode, CI sharding, run by directory/file/line number, fail-fast, and color formatting.
 
