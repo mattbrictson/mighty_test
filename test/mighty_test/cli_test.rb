@@ -8,7 +8,7 @@ module MightyTest
       result = cli_run(argv: ["--help"])
 
       assert_includes(result.stdout, "Usage: mt")
-      assert_includes(result.stdout, "minitest options:")
+      assert_match(/minitest .*options/, result.stdout)
     end
 
     def test_help_flag_takes_precedence_over_other_flags
