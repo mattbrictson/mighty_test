@@ -1,3 +1,6 @@
+> [!NOTE]
+> **The mighty_test gem has been retired as of August 24, 2026. Version 0.5.2 was its final release.** My goal for this project was to bring first class command-line tooling and watch mode to minitest. These goals are now better served by other projects: [retest](https://github.com/AlexB52/retest) is a fantastic watch-mode that works with any testing framework, and [megatest](https://github.com/byroot/megatest) is a worthy replacement for minitest that has its own robust command-line runner. Please support those projects!
+
 # mighty_test
 
 [![Gem Version](https://img.shields.io/gem/v/mighty_test)](https://rubygems.org/gems/mighty_test)
@@ -259,4 +262,4 @@ Everyone interacting in this project’s codebases, issue trackers, chat rooms a
 
 ## Contribution guide
 
-Pull requests are welcome!
+This project was archived on August 24, 2026 and is no longer accepting contributions.
